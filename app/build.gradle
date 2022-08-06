@@ -6,12 +6,17 @@
  * User Manual available at https://docs.gradle.org/7.5.1/userguide/building_java_projects.html
  */
 
+
+
+
 plugins {
     // Apply the application plugin to add support for building a CLI application in Java.
     id 'application'
     id 'java'
     id 'com.github.johnrengelman.shadow' version '5.2.0'
+    id("org.beryx.runtime") version "1.12.7"
 }
+
 
 repositories {
     // Use Maven Central for resolving dependencies.
@@ -43,6 +48,7 @@ mainClassName='com.xxx.sample.App'
 application {
     // Define the main class for the application.
     mainClass = 'com.xxx.sample.App'
+    applicationName = 'hello'
 }
 
 tasks.named('test') {
@@ -50,8 +56,40 @@ tasks.named('test') {
     useJUnitPlatform()
 }
 
-shadowJar {
+/*shadowJar {
     manifest{
         attributes 'Main-class': 'com.crazybit.sample1.App'
+    }
+}*/
+
+jar {
+    manifest {
+        attributes 'Implementation-Title': "non-modular-hello",
+                'Main-Class': 'com.crazybit.sample1.App'
+    }
+}
+
+runtime {
+    modules = ['java.naming', 'java.xml']
+    jpackage {
+        def currentOs = org.gradle.internal.os.OperatingSystem.current()
+        if(currentOs.windows) {
+            installerOptions += ['--win-per-user-install', '--win-dir-chooser', '--win-menu', '--win-shortcut']
+            imageOptions = ['--win-console']
+        } else if (currentOs.linux) {
+            installerOptions += ['--linux-package-name', 'non-modular-hello','--linux-shortcut']
+        } else if (currentOs.macOsX) {
+            installerOptions += ['--mac-package-name', 'non-modular-hello']
+            installerType = 'dmg'
+        }
+    }
+}
+
+tasks.jpackage.doFirst {
+    def currentOs = org.gradle.internal.os.OperatingSystem.current()
+    def basePath = currentOs.windows ? project.name : currentOs.linux ? "$project.name/lib" : "${project.name}.app/Contents"
+    copy {
+        from('src/main/resources')
+        into("$buildDir/jpackage/$basePath/app")
     }
 }
