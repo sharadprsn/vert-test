@@ -38,6 +38,8 @@ dependencies {
 
 }
 
+mainClassName:'com.xxx.sample.App'
+
 application {
     // Define the main class for the application.
     mainClass = 'com.xxx.sample.App'
